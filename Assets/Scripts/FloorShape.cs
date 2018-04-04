@@ -31,13 +31,13 @@ namespace shapegrammar
                 go = new GameObject();
                 go.transform.position = MakeBoundaryRelative(boundary);
                 go.name = "Shape" + ancestryDepth;
-                ConstructMesh(go, _boundary);
+                ConstructMesh(go, _boundary, go.transform.position);
                 // Debug scaling
                 go.transform.localScale = new Vector3(0.99f, 0.99f, 0.99f);
             }
         }
 
-        public void ConstructMesh(GameObject g, List<Vector3> _boundary)
+        public void ConstructMesh(GameObject g, List<Vector3> _boundary, Vector3 centrePoint)
         {
             g.AddComponent<MeshFilter>();
             g.AddComponent<MeshRenderer>();
@@ -45,7 +45,21 @@ namespace shapegrammar
 
             mesh.Clear();
 
-            mesh.vertices = _boundary.ToArray();
+            List<Vector3> verts = new List<Vector3>();
+            verts.Add(centrePoint);
+            verts.AddRange(_boundary);
+
+            mesh.vertices = verts.ToArray();
+            List<int> tris = new List<int>();
+            for (int i = 3; i < verts.Count; i++)
+            {
+                tris.Add(0);
+                tris.Add(i - 1);
+                tris.Add(i);
+            }
+            mesh.triangles = tris.ToArray();
+
+            /*
             if (_boundary.Count == 3)
             {
                 // shape is a triangle
@@ -62,9 +76,10 @@ namespace shapegrammar
             else
             {
                 // shape is a pentagon
-                mesh.triangles = new int[] { 0, 1, 2, 2, 3, 4, 0, 2, 4};
+                mesh.triangles = new int[] { 0, 1, 2, 0, 2, 3, 0, 3, 4};
                 mesh.uv = new Vector2[] { new Vector2(0, 0), new Vector2(0, 0.5f), new Vector2(0.5f, 1), new Vector2(1, 0.5f), new Vector2(1, 0) };
             }
+            */
         }
 
         public List<Shape> GenerateChildShapes()
@@ -72,14 +87,16 @@ namespace shapegrammar
             if (shapeType != ShapeType.final)
             {
                 // Just halve them in either dimension for now
-                int edgeStartingSplit = (int)Mathf.FloorToInt(Random.Range(0, boundary.Count - 1f));
+                int edgeStartingSplit = (int)Random.Range(0, boundary.Count-1);
                 float tStartingSplit = Random.Range(0f, 1.0f);
-                int edgeEndingSplit = (int)Random.Range(edgeStartingSplit, boundary.Count-1) + 1;
+                int edgeEndingSplit = (int)Random.Range(edgeStartingSplit+1, boundary.Count);
                 float tEndingSplit = Random.Range(0f, 1.0f);
                 // Perform split
                 foreach (var childBoundary in SplitBoundaryAlongLengths(edgeStartingSplit, tStartingSplit, edgeEndingSplit, tEndingSplit))
                 {
-                    children.Add(new Shape(Vector3.zero, childBoundary, this, ShapeType.final, ancestryDepth+1));
+                    ShapeType childType = (ShapeType)(int)Random.Range(0, (int)ShapeType.COUNT);
+                    Debug.Log("Childtype: " + childType);
+                    children.Add(new Shape(Vector3.zero, childBoundary, this, childType, ancestryDepth+1));
                 }
             }
             return children;
@@ -146,5 +163,6 @@ namespace shapegrammar
     {
         final = 0,
         start = 1,
+        COUNT = 2
     }
 }

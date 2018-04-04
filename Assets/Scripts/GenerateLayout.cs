@@ -12,7 +12,7 @@ public class GenerateLayout : MonoBehaviour {
         rootShape = new Shape(Vector3.zero, RandomStartingBoundary(), null, ShapeType.start, 0);
         unprocessedChildren.Add(rootShape);
         // Decompose shapes into children
-        if (unprocessedChildren.Count != 0)
+        while (unprocessedChildren.Count != 0)
         {
             // Extract highest priority shape from unprocessed list
             Shape nextShape = unprocessedChildren[0];
